@@ -1,0 +1,24 @@
+name: eliferpg-npc
+
+networks:
+  eliferpg:
+    external: true
+
+services:
+  npc-simulation:
+    image: ${NPCSIM_IMAGE:-ghcr.io/eliferpg/npc-virtual-simulation:latest}
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    environment:
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__NpcSimulationDatabase: "Host=postgres;Database=npc;Username=npc;Password=${NPC_DB_PASSWORD:?set NPC_DB_PASSWORD in .env}"
+      ConnectionStrings__Tracing: http://otel-collector:4317
+      Authentication__Authority: https://${AUTH_HOST:?set AUTH_HOST in .env}/realms/eliferpg
+      CentralApi__BaseUrl: http://backend:8080
+      Keycloak__BaseUrl: http://keycloak:8080/
+      Keycloak__Realm: eliferpg
+      GameServerInstances__0__ClientId: ${NPCSIM_CLIENT_ID:-gameserver-dev}
+      GameServerInstances__0__ClientSecret: ${NPCSIM_CLIENT_SECRET:?set NPCSIM_CLIENT_SECRET in .env}
+    networks:
+      - eliferpg

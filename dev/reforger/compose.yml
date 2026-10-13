@@ -1,0 +1,35 @@
+name: eliferpg-reforger
+
+networks:
+  eliferpg:
+    external: true
+  reforger:
+
+services:
+  bridge:
+    image: ${BRIDGE_IMAGE:-ghcr.io/eliferpg/reforger-bridge:latest}
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    environment:
+      Kestrel__Endpoints__Public__Url: http://0.0.0.0:8080
+      Kestrel__Endpoints__Management__Url: http://0.0.0.0:8081
+      Backend__BaseUrl: http://backend:8080
+      Keycloak__BaseUrl: http://keycloak:8080/
+      Keycloak__Realm: eliferpg
+      Keycloak__ClientId: ${BRIDGE_CLIENT_ID:-gameserver-dev}
+      Keycloak__ClientSecret: ${BRIDGE_CLIENT_SECRET:?set BRIDGE_CLIENT_SECRET in .env}
+    networks:
+      - eliferpg
+      - reforger
+
+  gameserver:
+    image: busybox:1.36
+    profiles: [gameserver]
+    command: ["sh", "-c", "echo 'gameserver placeholder: configure an image in reforger/compose.yml' && sleep infinity"]
+    environment:
+      BRIDGE_URL: http://bridge:8080
+    depends_on:
+      - bridge
+    networks:
+      - reforger

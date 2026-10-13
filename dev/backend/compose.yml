@@ -1,0 +1,54 @@
+name: eliferpg-backend
+
+networks:
+  eliferpg:
+    external: true
+
+x-db: &db "Host=postgres;Database=backend;Username=backend;Password=${BACKEND_DB_PASSWORD:?set BACKEND_DB_PASSWORD in .env}"
+
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/eliferpg/backend:latest}
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    environment:
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__AccountDatabase: *db
+      ConnectionStrings__CharacterDatabase: *db
+      ConnectionStrings__BankingDatabase: *db
+      ConnectionStrings__CompanyDatabase: *db
+      ConnectionStrings__ItemDatabase: *db
+      ConnectionStrings__ShopDatabase: *db
+      ConnectionStrings__PhoneDatabase: *db
+      ConnectionStrings__WorldDatabase: *db
+      ConnectionStrings__SharedDatabase: *db
+      ConnectionStrings__Tracing: http://otel-collector:4317
+      Authentication__Authority: https://${AUTH_HOST:?set AUTH_HOST in .env}/realms/eliferpg
+      Keycloak__BaseUrl: http://keycloak:8080/
+      Keycloak__Realm: eliferpg
+      Keycloak__ProvisioningClientId: account-service
+      Keycloak__ProvisioningClientSecret: ${KC_ACCOUNT_SERVICE_SECRET:?set KC_ACCOUNT_SERVICE_SECRET in .env}
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-5100}:8080"
+    networks:
+      - eliferpg
+
+  webapp:
+    image: ${WEBAPP_IMAGE:-ghcr.io/eliferpg/webapp:latest}
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    environment:
+      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:?set NUXT_SESSION_PASSWORD in .env (32+ chars)}
+      KEYCLOAK_ISSUER: https://${AUTH_HOST}/realms/eliferpg
+      KEYCLOAK_CLIENT_ID: eliferpg-portal
+      KEYCLOAK_CLIENT_SECRET: ${KC_PORTAL_SECRET:?set KC_PORTAL_SECRET in .env}
+      NUXT_PUBLIC_BASE_URL: https://${PORTAL_HOST:?set PORTAL_HOST in .env}
+      ELIFERPG_API_BASE: http://backend:8080
+    ports:
+      - "127.0.0.1:${WEBAPP_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    networks:
+      - eliferpg

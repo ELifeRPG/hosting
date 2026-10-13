@@ -1,0 +1,29 @@
+name: eliferpg-postgres
+
+networks:
+  eliferpg:
+    external: true
+
+volumes:
+  data:
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set KEYCLOAK_DB_PASSWORD in .env}
+      BACKEND_DB_PASSWORD: ${BACKEND_DB_PASSWORD:?set BACKEND_DB_PASSWORD in .env}
+      NPC_DB_PASSWORD: ${NPC_DB_PASSWORD:?set NPC_DB_PASSWORD in .env}
+    volumes:
+      - data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - eliferpg
