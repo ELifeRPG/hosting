@@ -8,7 +8,7 @@ Independent Compose stacks on the shared external `eliferpg` network.
 | `keycloak/` | keycloak | postgres |
 | `backend/` | backend, webapp | postgres, keycloak |
 | `npc/` | npc-simulation | postgres, keycloak, backend |
-| `reforger/` | bridge, gameserver (profile `gameserver`) | keycloak, backend |
+| `reforger/` | bridge, gameserver | keycloak, backend |
 | `telemetry/` | otel-collector, tempo, prometheus, loki, grafana | – |
 | `watchtower/` | watchtower | – |
 
@@ -43,3 +43,4 @@ proxy with a publicly trusted certificate.
 - The realm in `keycloak/import/` is imported on first start only.
 - Watchtower updates every container labelled `com.centurylinklabs.watchtower.enable=true`.
 - Register the gameserver after first start: `POST /api/game-servers`.
+- Workshop mods: edit `reforger/mods.json` (`[{"modId": "…", "name": "…", "version": "optional pin"}]`), then `docker compose restart gameserver`.

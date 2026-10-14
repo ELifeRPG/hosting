@@ -24,12 +24,30 @@ services:
       - reforger
 
   gameserver:
-    image: busybox:1.36
-    profiles: [gameserver]
-    command: ["sh", "-c", "echo 'gameserver placeholder: configure an image in reforger/compose.yml' && sleep infinity"]
+    image: ${GAMESERVER_IMAGE:-ghcr.io/eliferpg/reforger-server:latest}
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
     environment:
+      SERVER_NAME: ${SERVER_NAME:-ELifeRPG}
+      SERVER_PASSWORD: ${SERVER_PASSWORD:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      SCENARIO_ID: ${SCENARIO_ID:-}
+      MAX_PLAYERS: ${MAX_PLAYERS:-32}
+      PUBLIC_ADDRESS: ${PUBLIC_ADDRESS:-}
       BRIDGE_URL: http://bridge:8080
+    ports:
+      - ${GAME_PORT:-2001}:2001/udp
+      - ${A2S_PORT:-17777}:17777/udp
+    volumes:
+      - server:/reforger/server
+      - profile:/reforger/profile
+      - ./mods.json:/reforger/mods.json:ro
     depends_on:
       - bridge
     networks:
       - reforger
+
+volumes:
+  server:
+  profile:
